@@ -37,7 +37,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fillViewport="false"
-        android:horizontalScrollBarEnabled="false"
         android:background="@color/nexo_panel">
         <LinearLayout
             android:id="@+id/editor_tools"
