@@ -36,7 +36,8 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
     void setObjectCount(int n){count=Math.max(0,Math.min(128,n));}
     void setImportedMesh(float[] packed){if(packed==null||packed.length<18||packed.length%6!=0){importedData=null;importedVertices=0;return;}importedData=buffer(packed);importedVertices=packed.length/6;}
     void setGridEnabled(boolean enabled){showGrid=enabled;}
-    void setCameraMode(int mode){cameraMode=Math.max(0,Math.min(4,mode));switch(cameraMode){case 1:yaw=0;pitch=0;zoom=8;break;case 2:yaw=0;pitch=88;zoom=8;break;case 3:yaw=90;pitch=0;zoom=8;break;default:break;}}\n    void placeCameraAtCurrentView(){float yr=(float)Math.toRadians(yaw),pr=(float)Math.toRadians(pitch);cameraX=(float)(zoom*Math.cos(pr)*Math.sin(yr));cameraY=(float)(zoom*Math.sin(pr));cameraZ=(float)(zoom*Math.cos(pr)*Math.cos(yr));cameraMode=4;}
+    void setCameraMode(int mode){cameraMode=Math.max(0,Math.min(4,mode));switch(cameraMode){case 1:yaw=0;pitch=0;zoom=8;break;case 2:yaw=0;pitch=88;zoom=8;break;case 3:yaw=90;pitch=0;zoom=8;break;default:break;}}
+    void placeCameraAtCurrentView(){float yr=(float)Math.toRadians(yaw),pr=(float)Math.toRadians(pitch);cameraX=(float)(zoom*Math.cos(pr)*Math.sin(yr));cameraY=(float)(zoom*Math.sin(pr));cameraZ=(float)(zoom*Math.cos(pr)*Math.cos(yr));cameraMode=4;}
     void setDirectionalLight(boolean enabled){directionalLight=enabled;}
     void setLightProbe(boolean enabled){lightProbe=enabled;}
     void orbit(float dx,float dy){yaw+=dx*.6f;pitch=Math.max(-80,Math.min(80,pitch+dy*.45f));}
