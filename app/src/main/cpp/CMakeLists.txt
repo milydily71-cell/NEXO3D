@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.22.1)
+project(nexo_native LANGUAGES CXX)
+add_library(nexo_native SHARED SceneCore.cpp GltfAssetReader.cpp jni_bridge.cpp)
+target_compile_features(nexo_native PRIVATE cxx_std_20)
+target_compile_options(nexo_native PRIVATE -Wall -Wextra -Wpedantic -Werror=return-type)
+find_library(log-lib log)
+target_link_libraries(nexo_native PRIVATE ${log-lib})
