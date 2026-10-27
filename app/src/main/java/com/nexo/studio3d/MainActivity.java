@@ -73,8 +73,11 @@ public class MainActivity extends Activity {
         try(InputStream in=getContentResolver().openInputStream(uri);ByteArrayOutputStream out=new ByteArrayOutputStream()){
             if(in==null)throw new java.io.IOException("Could not open selected asset");byte[] buffer=new byte[8192];int total=0,n;
             while((n=in.read(buffer))!=-1){total+=n;if(total>MAX_ASSET_BYTES)throw new java.io.IOException("File exceeds 32 MiB safety limit");out.write(buffer,0,n);}
-            String result=NativeScene.nativeInspectGltf(out.toByteArray());status.setText(name+" • "+result);
-            new AlertDialog.Builder(this).setTitle("glTF asset inspection").setMessage(result+"\n\nThis validates the GLB/glTF 2.0 container only. Full mesh, texture, skin and animation rendering is not yet connected to the viewport.").setPositiveButton("OK",null).show();
+            byte[] asset=out.toByteArray();
+            float[] mesh=GltfLoader.loadFirstMesh(asset);
+            scene.queueEvent(()->scene.renderer.setImportedMesh(mesh));
+            status.setText("Loaded mesh: "+name+" • "+(mesh.length/6)+" triangle vertices");
+            toast("Mesh loaded into viewport");
         }catch(Exception e){new AlertDialog.Builder(this).setTitle("Import inspection failed").setMessage(e.getMessage()==null?"Unable to read asset":e.getMessage()).setPositiveButton("OK",null).show();}
     }
     @Override protected void onPause(){if(scene!=null)scene.onPause();super.onPause();}
