@@ -1,35 +1,32 @@
 # NEXO Studio 3D
 
-Native Android 3D-editor project. The current milestone is a small, installable Android application with a live OpenGL ES viewport and touch orbit controls.
+Native Android 3D editor foundation. This repository now contains Java Android UI code, an OpenGL ES viewport, and a C++20 scene core compiled through Android NDK/CMake. It is a working foundation, not yet a feature-complete Prisma3D replacement.
 
-## Current implementation
+## Implemented source features
 
-- Native Android Activity and GLSurfaceView (no WebView).
-- OpenGL ES 2.0 rendering of colored 3D cube primitives.
-- Drag-to-orbit camera controls.
-- Add Cube button for adding primitive instances.
-- Android document picker for selecting .glb / .gltf files.
-- GitHub Actions build workflow that assembles a debug APK and uploads it as an artifact.
+- Native Android Activity and GLSurfaceView; no WebView.
+- OpenGL ES viewport with colored cube primitives, visible toggleable editor grid, drag orbit, and two-finger pinch zoom.
+- Native C++ scene model with stable entity IDs, cube creation/removal, transform data, bounded undo/redo history, and JSON scene serialization.
+- Save current scene data to a user-selected JSON file.
+- Native GLB/glTF 2.0 container inspection with GLB header/chunk bounds validation and a 32 MiB input cap.
+- OpenGL shader compile/link diagnostics and context recreation path.
+- GitHub Actions workflow builds Java plus the C++ JNI shared library and verifies the APK contains the native library before uploading it.
 
-## Not implemented yet
+## Important limitations (not falsely marked complete)
 
-Selecting a GLB/glTF file is not the same as importing and rendering it. The glTF mesh/material/texture/skin/animation loader is still pending. Mesh editing, vertex/edge/face operations, skeleton creation and skinning, keyframe animation, project serialization, PBR, shadows, and offline rendering are also not implemented in this first milestone. The Model, Rig, Animate and Render buttons currently explain their planned status instead of pretending these features work.
+The glTF reader currently validates container/JSON metadata only. It does **not** decode accessors/buffers into renderable meshes or load textures/materials. The viewport still renders cube primitives. Vertex/edge/face editing, extrude/UV tools, transform gizmos, complete skeleton authoring and skin-weight deformation, animation timeline UI/playback/export, PBR/IBL, shadows, offline rendering, and FBX are not implemented yet. Native keyframe data/interpolation structures exist in the C++ scene core, but are not yet exposed as a finished animation editor.
 
 ## Build
 
-The GitHub Actions workflow installs Android SDK platform 35 and uses JDK 17 with Gradle 8.9:
+GitHub Actions installs JDK 17, Android platform 35, build tools 35.0.0, NDK 27.2.12479018 and CMake 3.22.1, then runs Gradle assembleDebug. A green workflow and a non-empty APK with libnexo_native.so are required before calling a build verified.
 
-    gradle --no-daemon assembleDebug
-
-APK output: app/build/outputs/apk/debug/app-debug.apk.
-
-On GitHub, open Actions > Android APK > latest successful run > Artifacts to download the debug APK. A successful CI run is required before considering the artifact verified.
+APK path: app/build/outputs/apk/debug/app-debug.apk. On GitHub, open Actions > Android APK > a successful run > Artifacts.
 
 ## Roadmap
 
-1. Add a visible editor grid, selection and transform gizmos.
-2. Add editable primitive meshes and undo/redo.
-3. Integrate a real glTF 2.0 loader for GLB/glTF meshes, PBR materials and textures.
-4. Add skeleton hierarchy, skinning and imported animation playback.
-5. Add editable keyframes, timeline tracks and animation export.
-6. Add project save/load, render settings and image export.
+1. Real glTF 2.0 buffer/accessor/mesh decoding, texture/material loading and imported mesh rendering.
+2. Selection, transform gizmos and editable vertices/edges/faces.
+3. Exposed timeline UI, transform editing, keyframe creation/playback and animation export.
+4. Skeleton hierarchy, skin weights, joint matrices and skinned animation playback.
+5. PBR metallic-roughness, image-based lighting, shadows and render presets.
+6. Scene/project load, resource management, autosave, diagnostics, and device smoke tests.
