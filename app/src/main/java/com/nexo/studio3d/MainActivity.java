@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
         scene=new SceneView(); root.addView(scene,new LinearLayout.LayoutParams(-1,0,1));
         HorizontalScrollView scroll=new HorizontalScrollView(this); scroll.setHorizontalScrollBarEnabled(false);
         LinearLayout tools=new LinearLayout(this); tools.setPadding(6,6,6,6); tools.setGravity(Gravity.CENTER_VERTICAL); tools.setBackgroundColor(Color.rgb(24,28,40));
-        String[] names={"+ Cube","Remove","Undo","Redo","Grid","Front","Top","Side","Camera View","Dir Light","Light Probe","Save Scene"};
+        String[] names={"+ Cube","Remove","Undo","Redo","Grid","Front","Top","Side","Place Camera","Camera View","Dir Light","Light Probe","Save Scene"};
         for(String name:names){Button b=button(name);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-2,46);lp.setMargins(3,0,3,0);tools.addView(b,lp);b.setOnClickListener(v->handleTool(name));}
         scroll.addView(tools);root.addView(scroll);
         status=new TextView(this);status.setTextColor(Color.rgb(190,199,220));status.setTextSize(12);status.setPadding(12,7,12,7);root.addView(status);
@@ -61,6 +61,7 @@ public class MainActivity extends Activity {
             case "Front": scene.queueEvent(()->scene.renderer.setCameraMode(1));refreshStatus("Front view");break;
             case "Top": scene.queueEvent(()->scene.renderer.setCameraMode(2));refreshStatus("Top view");break;
             case "Side": scene.queueEvent(()->scene.renderer.setCameraMode(3));refreshStatus("Side view");break;
+            case "Place Camera": scene.queueEvent(()->scene.renderer.placeCameraAtCurrentView());refreshStatus("Camera placed at current editor view");break;
             case "Camera View": scene.queueEvent(()->scene.renderer.setCameraMode(4));refreshStatus("Active camera view");break;
             case "Dir Light": directionalLight=!directionalLight;final boolean dl=directionalLight;scene.queueEvent(()->scene.renderer.setDirectionalLight(dl));refreshStatus(dl?"Directional light enabled":"Directional light disabled");break;
             case "Light Probe": lightProbe=!lightProbe;final boolean lp=lightProbe;scene.queueEvent(()->scene.renderer.setLightProbe(lp));refreshStatus(lp?"Environment fill enabled":"Environment fill reduced");break;
