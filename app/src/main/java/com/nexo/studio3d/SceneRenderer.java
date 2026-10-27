@@ -30,13 +30,13 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
     private int gridVertices,importedVertices,program,posLoc,colorLoc,mvpLoc,lightLoc,ambientLoc,width=1,height=1,count=1;
     private boolean showGrid=true,directionalLight=true,lightProbe=true;
     private int cameraMode=0;
-    private float yaw=35,pitch=22,zoom=8.5f;
+    private float yaw=35,pitch=22,zoom=8.5f,cameraX=4.5f,cameraY=3.2f,cameraZ=6.5f;
     private final float[] projection=new float[16],view=new float[16],model=new float[16],vp=new float[16],mvp=new float[16];
 
     void setObjectCount(int n){count=Math.max(0,Math.min(128,n));}
     void setImportedMesh(float[] packed){if(packed==null||packed.length<18||packed.length%6!=0){importedData=null;importedVertices=0;return;}importedData=buffer(packed);importedVertices=packed.length/6;}
     void setGridEnabled(boolean enabled){showGrid=enabled;}
-    void setCameraMode(int mode){cameraMode=Math.max(0,Math.min(4,mode));switch(cameraMode){case 1:yaw=0;pitch=0;zoom=8;break;case 2:yaw=0;pitch=88;zoom=8;break;case 3:yaw=90;pitch=0;zoom=8;break;case 4:yaw=35;pitch=22;zoom=8;break;default:break;}}
+    void setCameraMode(int mode){cameraMode=Math.max(0,Math.min(4,mode));switch(cameraMode){case 1:yaw=0;pitch=0;zoom=8;break;case 2:yaw=0;pitch=88;zoom=8;break;case 3:yaw=90;pitch=0;zoom=8;break;default:break;}}\n    void placeCameraAtCurrentView(){float yr=(float)Math.toRadians(yaw),pr=(float)Math.toRadians(pitch);cameraX=(float)(zoom*Math.cos(pr)*Math.sin(yr));cameraY=(float)(zoom*Math.sin(pr));cameraZ=(float)(zoom*Math.cos(pr)*Math.cos(yr));cameraMode=4;}
     void setDirectionalLight(boolean enabled){directionalLight=enabled;}
     void setLightProbe(boolean enabled){lightProbe=enabled;}
     void orbit(float dx,float dy){yaw+=dx*.6f;pitch=Math.max(-80,Math.min(80,pitch+dy*.45f));}
@@ -63,7 +63,7 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT|GLES20.GL_DEPTH_BUFFER_BIT);if(program==0)return;
         float yr=(float)Math.toRadians(yaw),pr=(float)Math.toRadians(pitch);
         float cx=(float)(zoom*Math.cos(pr)*Math.sin(yr)),cy=(float)(zoom*Math.sin(pr)),cz=(float)(zoom*Math.cos(pr)*Math.cos(yr));
-        if(cameraMode==4){cx=4.5f;cy=3.2f;cz=6.5f;}
+        if(cameraMode==4){cx=cameraX;cy=cameraY;cz=cameraZ;}
         Matrix.setLookAtM(view,0,cx,cy,cz,0,0,0,0,1,0);Matrix.multiplyMM(vp,0,projection,0,view,0);GLES20.glUseProgram(program);
         GLES20.glUniform3f(lightLoc,directionalLight?-.35f:-.01f,-1f,-.55f);GLES20.glUniform1f(ambientLoc,lightProbe?.42f:.08f);
         if(showGrid){Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);bind(gridData);GLES20.glDrawArrays(GLES20.GL_LINES,0,gridVertices);unbind();}
