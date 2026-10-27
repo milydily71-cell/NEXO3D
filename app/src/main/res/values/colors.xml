@@ -1,0 +1,11 @@
+<resources>
+    <color name="nexo_bg">#10131C</color>
+    <color name="nexo_panel">#181C28</color>
+    <color name="nexo_panel_raised">#242B3D</color>
+    <color name="nexo_accent">#65C7FF</color>
+    <color name="nexo_text">#F2F5FC</color>
+    <color name="nexo_text_muted">#BEC7DC</color>
+    <color name="nexo_axis_x">#FF3838</color>
+    <color name="nexo_axis_y">#40D980</color>
+    <color name="nexo_axis_z">#4FA8FF</color>
+</resources>
