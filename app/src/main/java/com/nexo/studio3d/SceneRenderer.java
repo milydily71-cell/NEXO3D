@@ -28,7 +28,8 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
     };
     private FloatBuffer cubeData,gridData,axisData,importedData;
     private int gridVertices,importedVertices,program,posLoc,colorLoc,mvpLoc,lightLoc,ambientLoc,width=1,height=1,count=1;
-    private boolean showGrid=true;
+    private boolean showGrid=true,directionalLight=true,lightProbe=true;
+    private int cameraMode=0;
     private float yaw=35,pitch=22,zoom=8.5f;
     private final float[] projection=new float[16],view=new float[16],model=new float[16],vp=new float[16],mvp=new float[16];
 
@@ -62,7 +63,9 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT|GLES20.GL_DEPTH_BUFFER_BIT);if(program==0)return;
         float yr=(float)Math.toRadians(yaw),pr=(float)Math.toRadians(pitch);
         float cx=(float)(zoom*Math.cos(pr)*Math.sin(yr)),cy=(float)(zoom*Math.sin(pr)),cz=(float)(zoom*Math.cos(pr)*Math.cos(yr));
+        if(cameraMode==4){cx=4.5f;cy=3.2f;cz=6.5f;}
         Matrix.setLookAtM(view,0,cx,cy,cz,0,0,0,0,1,0);Matrix.multiplyMM(vp,0,projection,0,view,0);GLES20.glUseProgram(program);
+        GLES20.glUniform3f(lightLoc,directionalLight?-.35f:-.01f,-1f,-.55f);GLES20.glUniform1f(ambientLoc,lightProbe?.42f:.08f);
         if(showGrid){Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);bind(gridData);GLES20.glDrawArrays(GLES20.GL_LINES,0,gridVertices);unbind();}
         Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);bind(axisData);GLES20.glLineWidth(3f);GLES20.glDrawArrays(GLES20.GL_LINES,0,6);unbind();GLES20.glLineWidth(1f);
         if(importedData!=null){Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);bind(importedData);GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,importedVertices);unbind();}
