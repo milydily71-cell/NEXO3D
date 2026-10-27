@@ -32,7 +32,8 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
     private float yaw=35,pitch=22,zoom=8.5f;
     private final float[] projection=new float[16],view=new float[16],model=new float[16],vp=new float[16],mvp=new float[16];
 
-    void setObjectCount(int n){count=Math.max(0,Math.min(128,n));}\n    void setImportedMesh(float[] packed){if(packed==null||packed.length<18||packed.length%6!=0){importedData=null;importedVertices=0;return;}importedData=buffer(packed);importedVertices=packed.length/6;}
+    void setObjectCount(int n){count=Math.max(0,Math.min(128,n));}
+    void setImportedMesh(float[] packed){if(packed==null||packed.length<18||packed.length%6!=0){importedData=null;importedVertices=0;return;}importedData=buffer(packed);importedVertices=packed.length/6;}
     void setGridEnabled(boolean enabled){showGrid=enabled;}
     void orbit(float dx,float dy){yaw+=dx*.6f;pitch=Math.max(-80,Math.min(80,pitch+dy*.45f));}
     void zoomBy(float factor){if(factor>0&&Float.isFinite(factor))zoom=Math.max(2.5f,Math.min(30f,zoom*factor));}
