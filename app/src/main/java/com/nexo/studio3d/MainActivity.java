@@ -2,7 +2,9 @@ package com.nexo.studio3d;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Intent;\nimport android.database.Cursor;\nimport android.provider.OpenableColumns;
+import android.content.Intent;
+import android.database.Cursor;
+import android.provider.OpenableColumns;
 import android.graphics.Color;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
@@ -56,6 +58,12 @@ public class MainActivity extends Activity {
             case "Undo": if(NativeScene.nativeUndo()){syncRenderer();refreshStatus("Undo complete");}else toast("Nothing to undo");break;
             case "Redo": if(NativeScene.nativeRedo()){syncRenderer();refreshStatus("Redo complete");}else toast("Nothing to redo");break;
             case "Grid": gridEnabled=!gridEnabled;final boolean enabled=gridEnabled;scene.queueEvent(()->scene.renderer.setGridEnabled(enabled));refreshStatus(enabled?"Editor grid enabled":"Editor grid hidden");break;
+            case "Front": scene.queueEvent(()->scene.renderer.setCameraMode(1));refreshStatus("Front view");break;
+            case "Top": scene.queueEvent(()->scene.renderer.setCameraMode(2));refreshStatus("Top view");break;
+            case "Side": scene.queueEvent(()->scene.renderer.setCameraMode(3));refreshStatus("Side view");break;
+            case "Camera View": scene.queueEvent(()->scene.renderer.setCameraMode(4));refreshStatus("Active camera view");break;
+            case "Dir Light": directionalLight=!directionalLight;final boolean dl=directionalLight;scene.queueEvent(()->scene.renderer.setDirectionalLight(dl));refreshStatus(dl?"Directional light enabled":"Directional light disabled");break;
+            case "Light Probe": lightProbe=!lightProbe;final boolean lp=lightProbe;scene.queueEvent(()->scene.renderer.setLightProbe(lp));refreshStatus(lp?"Environment fill enabled":"Environment fill reduced");break;
             case "Save Scene": saveScene();break;
         }
     }
@@ -63,7 +71,8 @@ public class MainActivity extends Activity {
     private void refreshStatus(String message){status.setText(message+"  •  Objects: "+NativeScene.count());}
     private void toast(String message){Toast.makeText(this,message,Toast.LENGTH_SHORT).show();}
     private void chooseModel(){Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("*/*");startActivityForResult(i,PICK_MODEL);}
-    private String displayName(Uri uri){try(Cursor cursor=getContentResolver().query(uri,new String[]{OpenableColumns.DISPLAY_NAME},null,null,null)){if(cursor!=null&&cursor.moveToFirst()){int i=cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);if(i>=0)return cursor.getString(i);}}catch(Exception ignored){}return uri.getLastPathSegment();}\n    private void saveScene(){Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("application/json");i.putExtra(Intent.EXTRA_TITLE,"nexo-scene.json");startActivityForResult(i,SAVE_SCENE);}
+    private String displayName(Uri uri){try(Cursor cursor=getContentResolver().query(uri,new String[]{OpenableColumns.DISPLAY_NAME},null,null,null)){if(cursor!=null&&cursor.moveToFirst()){int i=cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);if(i>=0)return cursor.getString(i);}}catch(Exception ignored){}return uri.getLastPathSegment();}
+    private void saveScene(){Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("application/json");i.putExtra(Intent.EXTRA_TITLE,"nexo-scene.json");startActivityForResult(i,SAVE_SCENE);}
     @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
         super.onActivityResult(requestCode,resultCode,data);if(resultCode!=RESULT_OK||data==null||data.getData()==null)return;Uri uri=data.getData();
         if(requestCode==SAVE_SCENE){try(java.io.OutputStream out=getContentResolver().openOutputStream(uri,"wt")){if(out==null)throw new java.io.IOException("Unable to open destination");out.write(NativeScene.nativeSerialize().getBytes(StandardCharsets.UTF_8));toast("Scene JSON saved");}catch(Exception e){toast("Save failed: "+e.getMessage());}return;}
@@ -74,7 +83,7 @@ public class MainActivity extends Activity {
             if(in==null)throw new java.io.IOException("Could not open selected asset");byte[] buffer=new byte[8192];int total=0,n;
             while((n=in.read(buffer))!=-1){total+=n;if(total>MAX_ASSET_BYTES)throw new java.io.IOException("File exceeds 32 MiB safety limit");out.write(buffer,0,n);}
             byte[] asset=out.toByteArray();
-            float[] mesh=GltfLoader.loadFirstMesh(asset);
+            float[] mesh=name.toLowerCase(java.util.Locale.ROOT).endsWith(".obj")?ObjLoader.load(asset):GltfLoader.loadFirstMesh(asset);
             scene.queueEvent(()->scene.renderer.setImportedMesh(mesh));
             status.setText("Loaded mesh: "+name+" • "+(mesh.length/6)+" triangle vertices");
             toast("Mesh loaded into viewport");
