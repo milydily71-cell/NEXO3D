@@ -34,7 +34,10 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
 
     void setObjectCount(int n){count=Math.max(0,Math.min(128,n));}
     void setImportedMesh(float[] packed){if(packed==null||packed.length<18||packed.length%6!=0){importedData=null;importedVertices=0;return;}importedData=buffer(packed);importedVertices=packed.length/6;}
-    void setGridEnabled(boolean enabled){showGrid=enabled;}\n    void setCameraMode(int mode){cameraMode=Math.max(0,Math.min(4,mode));switch(cameraMode){case 1:yaw=0;pitch=0;zoom=8;break;case 2:yaw=0;pitch=88;zoom=8;break;case 3:yaw=90;pitch=0;zoom=8;break;case 4:yaw=35;pitch=22;zoom=8;break;default:break;}}\n    void setDirectionalLight(boolean enabled){directionalLight=enabled;}\n    void setLightProbe(boolean enabled){lightProbe=enabled;}
+    void setGridEnabled(boolean enabled){showGrid=enabled;}
+    void setCameraMode(int mode){cameraMode=Math.max(0,Math.min(4,mode));switch(cameraMode){case 1:yaw=0;pitch=0;zoom=8;break;case 2:yaw=0;pitch=88;zoom=8;break;case 3:yaw=90;pitch=0;zoom=8;break;case 4:yaw=35;pitch=22;zoom=8;break;default:break;}}
+    void setDirectionalLight(boolean enabled){directionalLight=enabled;}
+    void setLightProbe(boolean enabled){lightProbe=enabled;}
     void orbit(float dx,float dy){yaw+=dx*.6f;pitch=Math.max(-80,Math.min(80,pitch+dy*.45f));}
     void zoomBy(float factor){if(factor>0&&Float.isFinite(factor))zoom=Math.max(2.5f,Math.min(30f,zoom*factor));}
 
@@ -60,7 +63,8 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
         float yr=(float)Math.toRadians(yaw),pr=(float)Math.toRadians(pitch);
         float cx=(float)(zoom*Math.cos(pr)*Math.sin(yr)),cy=(float)(zoom*Math.sin(pr)),cz=(float)(zoom*Math.cos(pr)*Math.cos(yr));
         Matrix.setLookAtM(view,0,cx,cy,cz,0,0,0,0,1,0);Matrix.multiplyMM(vp,0,projection,0,view,0);GLES20.glUseProgram(program);
-        if(showGrid){Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);bind(gridData);GLES20.glDrawArrays(GLES20.GL_LINES,0,gridVertices);unbind();}\n        Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);bind(axisData);GLES20.glLineWidth(3f);GLES20.glDrawArrays(GLES20.GL_LINES,0,6);unbind();GLES20.glLineWidth(1f);
+        if(showGrid){Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);bind(gridData);GLES20.glDrawArrays(GLES20.GL_LINES,0,gridVertices);unbind();}
+        Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);bind(axisData);GLES20.glLineWidth(3f);GLES20.glDrawArrays(GLES20.GL_LINES,0,6);unbind();GLES20.glLineWidth(1f);
         if(importedData!=null){Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);bind(importedData);GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,importedVertices);unbind();}
         else {bind(cubeData);for(int i=0;i<count;i++){Matrix.setIdentityM(model,0);float x=(i%8-3.5f)*2.35f,z=(i/8)*2.35f;Matrix.translateM(model,0,x,0,z);Matrix.scaleM(model,0,.55f,.55f,.55f);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,36);}unbind();}
     }
