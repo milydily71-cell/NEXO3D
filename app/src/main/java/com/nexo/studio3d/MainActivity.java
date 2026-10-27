@@ -25,7 +25,7 @@ public class MainActivity extends Activity {
     private static final int MAX_ASSET_BYTES=32*1024*1024;
     private SceneView scene;
     private TextView status;
-    private boolean gridEnabled=true,directionalLight=true,lightProbe=true;
+    private boolean gridEnabled=true,directionalLight=true,lightProbe=true,moveMode=false;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
         scene=new SceneView(); root.addView(scene,new LinearLayout.LayoutParams(-1,0,1));
         HorizontalScrollView scroll=new HorizontalScrollView(this); scroll.setHorizontalScrollBarEnabled(false);
         LinearLayout tools=new LinearLayout(this); tools.setPadding(6,6,6,6); tools.setGravity(Gravity.CENTER_VERTICAL); tools.setBackgroundColor(Color.rgb(24,28,40));
-        String[] names={"+ Cube","Remove","Undo","Redo","Grid","Front","Top","Side","Place Camera","Camera View","Dir Light","Light Probe","Save Scene"};
+        String[] names={"+ Cube","Remove","Undo","Redo","Grid","Move Gizmo","Front","Top","Side","Place Camera","Camera View","Dir Light","Light Probe","Save Scene"};
         for(String name:names){Button b=button(name);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-2,46);lp.setMargins(3,0,3,0);tools.addView(b,lp);b.setOnClickListener(v->handleTool(name));}
         scroll.addView(tools);root.addView(scroll);
         status=new TextView(this);status.setTextColor(Color.rgb(190,199,220));status.setTextSize(12);status.setPadding(12,7,12,7);root.addView(status);
@@ -58,6 +58,7 @@ public class MainActivity extends Activity {
             case "Undo": if(NativeScene.nativeUndo()){syncRenderer();refreshStatus("Undo complete");}else toast("Nothing to undo");break;
             case "Redo": if(NativeScene.nativeRedo()){syncRenderer();refreshStatus("Redo complete");}else toast("Nothing to redo");break;
             case "Grid": gridEnabled=!gridEnabled;final boolean enabled=gridEnabled;scene.queueEvent(()->scene.renderer.setGridEnabled(enabled));refreshStatus(enabled?"Editor grid enabled":"Editor grid hidden");break;
+            case "Move Gizmo": moveMode=!moveMode;final boolean mm=moveMode;scene.queueEvent(()->scene.renderer.setMoveMode(mm));refreshStatus(mm?"Move gizmo active: drag viewport to translate selection":"Orbit navigation active");break;
             case "Front": scene.queueEvent(()->scene.renderer.setCameraMode(1));refreshStatus("Front view");break;
             case "Top": scene.queueEvent(()->scene.renderer.setCameraMode(2));refreshStatus("Top view");break;
             case "Side": scene.queueEvent(()->scene.renderer.setCameraMode(3));refreshStatus("Side view");break;
@@ -100,7 +101,7 @@ public class MainActivity extends Activity {
         @Override public boolean onTouchEvent(MotionEvent e){
             if(e.getPointerCount()>=2){float d=distance(e);if(e.getActionMasked()==MotionEvent.ACTION_POINTER_DOWN)previousDistance=d;else if(e.getActionMasked()==MotionEvent.ACTION_MOVE&&previousDistance>0&&d>0){float factor=previousDistance/d;queueEvent(()->renderer.zoomBy(factor));previousDistance=d;}return true;}
             float x=e.getX(),y=e.getY();if(e.getActionMasked()==MotionEvent.ACTION_DOWN){previousX=x;previousY=y;previousDistance=0;return true;}
-            if(e.getActionMasked()==MotionEvent.ACTION_MOVE){final float dx=x-previousX,dy=y-previousY;queueEvent(()->renderer.orbit(dx,dy));previousX=x;previousY=y;return true;}
+            if(e.getActionMasked()==MotionEvent.ACTION_MOVE){final float dx=x-previousX,dy=y-previousY;if(moveMode)queueEvent(()->renderer.dragSelected(dx*.025f,-dy*.025f));else queueEvent(()->renderer.orbit(dx,dy));previousX=x;previousY=y;return true;}
             if(e.getActionMasked()==MotionEvent.ACTION_POINTER_UP)previousDistance=0;return true;
         }
     }
