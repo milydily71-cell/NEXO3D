@@ -1,0 +1,17 @@
+<resources>
+    <style name="NexoStudioTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">@color/nexo_accent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/nexo_bg</item>
+        <item name="android:navigationBarColor">@color/nexo_bg</item>
+        <item name="android:windowBackground">@color/nexo_bg</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+    <style name="NexoEditorButton" parent="@android:style/Widget.Material.Button">
+        <item name="android:textColor">@color/nexo_text</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:background">@drawable/editor_button</item>
+        <item name="android:minHeight">40dp</item>
+    </style>
+</resources>
