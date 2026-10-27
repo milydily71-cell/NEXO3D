@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 
 /** Minimal defensive glTF 2.0 triangle-mesh loader for embedded GLB/data-URI assets. */
 final class GltfLoader {
-    private static final int MAX_VERTICES=500_000;
+    private static final int MAX_VERTICES=100_000;
     private GltfLoader() {}
     static float[] loadFirstMesh(byte[] file) throws Exception {
         if(file==null||file.length<4)throw new IllegalArgumentException("Asset is empty");
@@ -64,8 +64,9 @@ final class GltfLoader {
         return packed;
     }
     private static void readPositions(byte[] bin,JSONObject view,JSONObject accessor,float[] out)throws Exception{
-        int base=view.getInt("byteOffset"),offset=base+accessor.optInt("byteOffset",0),stride=view.optInt("byteStride",12),count=accessor.getInt("count");
-        if(stride<12||offset<0||(long)offset+(long)(count-1)*stride+12>bin.length)throw new IllegalArgumentException("POSITION buffer range invalid");
+        int base=view.optInt("byteOffset",0),viewLength=view.getInt("byteLength"),offset=base+accessor.optInt("byteOffset",0),stride=view.optInt("byteStride",12),count=accessor.getInt("count");
+        long end=(long)offset+(long)(count-1)*stride+12;
+        if(base<0||viewLength<0||(long)base+viewLength>bin.length||stride<12||offset<base||end>(long)base+viewLength)throw new IllegalArgumentException("POSITION buffer range invalid");
         ByteBuffer b=ByteBuffer.wrap(bin).order(ByteOrder.LITTLE_ENDIAN);
         for(int i=0;i<count;i++){int p=offset+i*stride;out[i*3]=b.getFloat(p);out[i*3+1]=b.getFloat(p+4);out[i*3+2]=b.getFloat(p+8);}
     }
@@ -75,8 +76,9 @@ final class GltfLoader {
         if(count<3||count>MAX_VERTICES*6)throw new IllegalArgumentException("Index count exceeds limit");
         JSONObject view=views.getJSONObject(viewId);int size=component==5121?1:component==5123?2:component==5125?4:0;
         if(size==0)throw new IllegalArgumentException("Unsupported index component type");
-        int offset=view.optInt("byteOffset",0)+accessor.optInt("byteOffset",0),stride=view.optInt("byteStride",size);
-        if(stride<size||offset<0||(long)offset+(long)(count-1)*stride+size>bin.length)throw new IllegalArgumentException("Index buffer range invalid");
+        int base=view.optInt("byteOffset",0),viewLength=view.getInt("byteLength"),offset=base+accessor.optInt("byteOffset",0),stride=view.optInt("byteStride",size);
+        long end=(long)offset+(long)(count-1)*stride+size;
+        if(base<0||viewLength<0||(long)base+viewLength>bin.length||stride<size||offset<base||end>(long)base+viewLength)throw new IllegalArgumentException("Index buffer range invalid");
         ByteBuffer b=ByteBuffer.wrap(bin).order(ByteOrder.LITTLE_ENDIAN);int[] out=new int[count];
         for(int i=0;i<count;i++){int p=offset+i*stride;out[i]=component==5121?(b.get(p)&255):component==5123?(b.getShort(p)&65535):b.getInt(p);if(out[i]<0)throw new IllegalArgumentException("Negative index");}
         return out;
