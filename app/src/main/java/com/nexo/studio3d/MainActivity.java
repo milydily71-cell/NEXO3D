@@ -9,156 +9,86 @@ import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.MotionEvent;
-import android.view.View;
 import android.widget.Button;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends Activity {
-    private static final int PICK_MODEL = 41;
+    private static final int PICK_MODEL=41, SAVE_SCENE=42;
+    private static final int MAX_ASSET_BYTES=32*1024*1024;
     private SceneView scene;
     private TextView status;
-    private int primitiveCount = 1;
+    private boolean gridEnabled=true;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.rgb(16, 19, 28));
-
-        LinearLayout top = new LinearLayout(this);
-        top.setGravity(Gravity.CENTER_VERTICAL);
-        top.setPadding(14, 8, 14, 8);
-        TextView title = new TextView(this);
-        title.setText("NEXO  /  STUDIO 3D");
-        title.setTextColor(Color.WHITE);
-        title.setTextSize(18);
-        title.setTypeface(null, 1);
-        top.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
-        Button importButton = button("Import GLB");
-        importButton.setOnClickListener(v -> chooseModel());
-        top.addView(importButton);
-        root.addView(top);
-
-        scene = new SceneView();
-        root.addView(scene, new LinearLayout.LayoutParams(-1, 0, 1));
-
-        LinearLayout tools = new LinearLayout(this);
-        tools.setPadding(8, 7, 8, 7);
-        tools.setGravity(Gravity.CENTER);
-        tools.setBackgroundColor(Color.rgb(24, 28, 40));
-        String[] names = {"＋ Cube", "Model", "Rig", "Animate", "Render"};
-        for (String name : names) {
-            Button b = button(name);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 48, 1);
-            lp.setMargins(3, 0, 3, 0);
-            tools.addView(b, lp);
-            b.setOnClickListener(v -> handleTool(name));
-        }
-        root.addView(tools);
-
-        status = new TextView(this);
-        status.setText("Scene: Cube  •  Drag to orbit  •  Pinch to zoom");
-        status.setTextColor(Color.rgb(190, 199, 220));
-        status.setTextSize(12);
-        status.setPadding(12, 8, 12, 8);
-        root.addView(status);
-        setContentView(root);
-    }
-
-    private Button button(String label) {
-        Button b = new Button(this);
-        b.setText(label);
-        b.setTextSize(11);
-        b.setAllCaps(false);
-        b.setTextColor(Color.WHITE);
-        b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(55, 66, 96)));
-        return b;
-    }
-
-    private void handleTool(String name) {
-        switch (name) {
-            case "＋ Cube":
-                primitiveCount++;
-                scene.queueEvent(() -> scene.renderer.setObjectCount(primitiveCount));
-                status.setText("Scene: " + primitiveCount + " primitive cubes");
-                break;
-            case "Model":
-                new AlertDialog.Builder(this).setTitle("Model tools")
-                    .setMessage("Starter tools: primitive scene objects and orbit controls. Mesh editing (vertices, edges, faces), extrude and UV tools are planned for the next milestones.")
-                    .setPositiveButton("OK", null).show();
-                break;
-            case "Rig":
-                new AlertDialog.Builder(this).setTitle("Skeleton & rigging")
-                    .setMessage("Bone hierarchy, skin weights and skeletal deformation are planned features; they are not implemented in this starter build.")
-                    .setPositiveButton("OK", null).show();
-                break;
-            case "Animate":
-                new AlertDialog.Builder(this).setTitle("Animation timeline")
-                    .setMessage("Keyframe timeline, animation tracks and skeletal playback are planned for the next milestone.")
-                    .setPositiveButton("OK", null).show();
-                break;
-            case "Render":
-                new AlertDialog.Builder(this).setTitle("Render")
-                    .setMessage("This build shows a real-time OpenGL ES viewport. Offline rendering, PBR materials, shadows and export are not implemented yet.")
-                    .setPositiveButton("OK", null).show();
-                break;
-        }
-    }
-
-    private void chooseModel() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*");
-        startActivityForResult(intent, PICK_MODEL);
-    }
-
-    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != PICK_MODEL || resultCode != RESULT_OK || data == null) return;
-        Uri uri = data.getData();
-        if (uri == null) return;
-        String name = uri.getLastPathSegment();
-        if (name == null) name = "selected file";
-        if (!name.toLowerCase().contains(".glb") && !name.toLowerCase().contains(".gltf")) {
-            Toast.makeText(this, "Choose a .glb or .gltf file", Toast.LENGTH_LONG).show();
+        try { NativeScene.nativeReset(); }
+        catch (UnsatisfiedLinkError e) {
+            new AlertDialog.Builder(this).setTitle("Native engine failed")
+                .setMessage("NEXO C++ library could not load. Reinstall the latest APK.")
+                .setPositiveButton("Close",null).show();
             return;
         }
-        // Keep access to the selected document for the upcoming asset-loader milestone.
-        try { getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION); }
-        catch (Exception ignored) {}
-        status.setText("Selected model: " + name + " (loader integration pending)");
-        new AlertDialog.Builder(this).setTitle("Model selected")
-            .setMessage("The file was selected successfully. Rendering imported GLB/glTF meshes, textures, rigs and animations requires the asset-loader milestone.")
-            .setPositiveButton("OK", null).show();
+        LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(Color.rgb(16,19,28));
+        LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL); top.setPadding(12,6,12,6);
+        TextView title=new TextView(this); title.setText("NEXO  /  STUDIO 3D"); title.setTextColor(Color.WHITE); title.setTextSize(17); title.setTypeface(null,1);
+        top.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+        Button importButton=button("Import GLB"); importButton.setOnClickListener(v->chooseModel()); top.addView(importButton); root.addView(top);
+        scene=new SceneView(); root.addView(scene,new LinearLayout.LayoutParams(-1,0,1));
+        HorizontalScrollView scroll=new HorizontalScrollView(this); scroll.setHorizontalScrollBarEnabled(false);
+        LinearLayout tools=new LinearLayout(this); tools.setPadding(6,6,6,6); tools.setGravity(Gravity.CENTER_VERTICAL); tools.setBackgroundColor(Color.rgb(24,28,40));
+        String[] names={"+ Cube","Remove","Undo","Redo","Grid","Save Scene"};
+        for(String name:names){Button b=button(name);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-2,46);lp.setMargins(3,0,3,0);tools.addView(b,lp);b.setOnClickListener(v->handleTool(name));}
+        scroll.addView(tools);root.addView(scroll);
+        status=new TextView(this);status.setTextColor(Color.rgb(190,199,220));status.setTextSize(12);status.setPadding(12,7,12,7);root.addView(status);
+        setContentView(root);refreshStatus("Native scene ready");
     }
-
-    @Override protected void onPause() { super.onPause(); if (scene != null) scene.onPause(); }
-    @Override protected void onResume() { super.onResume(); if (scene != null) scene.onResume(); }
+    private Button button(String label){Button b=new Button(this);b.setText(label);b.setTextSize(11);b.setAllCaps(false);b.setTextColor(Color.WHITE);b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(55,66,96)));return b;}
+    private void handleTool(String name){
+        switch(name){
+            case "+ Cube": NativeScene.nativeAddCube();syncRenderer();refreshStatus("Cube added");break;
+            case "Remove": if(NativeScene.nativeRemoveLast()){syncRenderer();refreshStatus("Last object removed");}else toast("Scene is already empty");break;
+            case "Undo": if(NativeScene.nativeUndo()){syncRenderer();refreshStatus("Undo complete");}else toast("Nothing to undo");break;
+            case "Redo": if(NativeScene.nativeRedo()){syncRenderer();refreshStatus("Redo complete");}else toast("Nothing to redo");break;
+            case "Grid": gridEnabled=!gridEnabled;final boolean enabled=gridEnabled;scene.queueEvent(()->scene.renderer.setGridEnabled(enabled));refreshStatus(enabled?"Editor grid enabled":"Editor grid hidden");break;
+            case "Save Scene": saveScene();break;
+        }
+    }
+    private void syncRenderer(){int count=NativeScene.count();scene.queueEvent(()->scene.renderer.setObjectCount(count));}
+    private void refreshStatus(String message){status.setText(message+"  •  Objects: "+NativeScene.count());}
+    private void toast(String message){Toast.makeText(this,message,Toast.LENGTH_SHORT).show();}
+    private void chooseModel(){Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("*/*");startActivityForResult(i,PICK_MODEL);}
+    private void saveScene(){Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("application/json");i.putExtra(Intent.EXTRA_TITLE,"nexo-scene.json");startActivityForResult(i,SAVE_SCENE);}
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
+        super.onActivityResult(requestCode,resultCode,data);if(resultCode!=RESULT_OK||data==null||data.getData()==null)return;Uri uri=data.getData();
+        if(requestCode==SAVE_SCENE){try(java.io.OutputStream out=getContentResolver().openOutputStream(uri,"wt")){if(out==null)throw new java.io.IOException("Unable to open destination");out.write(NativeScene.nativeSerialize().getBytes(StandardCharsets.UTF_8));toast("Scene JSON saved");}catch(Exception e){toast("Save failed: "+e.getMessage());}return;}
+        if(requestCode!=PICK_MODEL)return;
+        String name=uri.getLastPathSegment();if(name==null)name="selected asset";
+        try{getContentResolver().takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}
+        try(InputStream in=getContentResolver().openInputStream(uri);ByteArrayOutputStream out=new ByteArrayOutputStream()){
+            if(in==null)throw new java.io.IOException("Could not open selected asset");byte[] buffer=new byte[8192];int total=0,n;
+            while((n=in.read(buffer))!=-1){total+=n;if(total>MAX_ASSET_BYTES)throw new java.io.IOException("File exceeds 32 MiB safety limit");out.write(buffer,0,n);}
+            String result=NativeScene.nativeInspectGltf(out.toByteArray());status.setText(name+" • "+result);
+            new AlertDialog.Builder(this).setTitle("glTF asset inspection").setMessage(result+"\n\nThis validates the GLB/glTF 2.0 container only. Full mesh, texture, skin and animation rendering is not yet connected to the viewport.").setPositiveButton("OK",null).show();
+        }catch(Exception e){new AlertDialog.Builder(this).setTitle("Import inspection failed").setMessage(e.getMessage()==null?"Unable to read asset":e.getMessage()).setPositiveButton("OK",null).show();}
+    }
+    @Override protected void onPause(){if(scene!=null)scene.onPause();super.onPause();}
+    @Override protected void onResume(){super.onResume();if(scene!=null)scene.onResume();}
 
     private final class SceneView extends GLSurfaceView {
-        final SceneRenderer renderer;
-        float previousX, previousY;
-        SceneView() {
-            super(MainActivity.this);
-            setEGLContextClientVersion(2);
-            renderer = new SceneRenderer();
-            setRenderer(renderer);
-            setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-        }
-        @Override public boolean onTouchEvent(MotionEvent e) {
-            if (e.getPointerCount() >= 2) return true;
-            float x = e.getX(), y = e.getY();
-            if (e.getAction() == MotionEvent.ACTION_DOWN) { previousX=x; previousY=y; return true; }
-            if (e.getAction() == MotionEvent.ACTION_MOVE) {
-                final float dx=x-previousX, dy=y-previousY;
-                queueEvent(() -> renderer.orbit(dx, dy));
-                previousX=x; previousY=y; return true;
-            }
-            return true;
+        final SceneRenderer renderer; float previousX,previousY,previousDistance;
+        SceneView(){super(MainActivity.this);setEGLContextClientVersion(2);setPreserveEGLContextOnPause(false);renderer=new SceneRenderer();setRenderer(renderer);setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);}
+        private float distance(MotionEvent e){if(e.getPointerCount()<2)return 0;float dx=e.getX(0)-e.getX(1),dy=e.getY(0)-e.getY(1);return (float)Math.sqrt(dx*dx+dy*dy);}
+        @Override public boolean onTouchEvent(MotionEvent e){
+            if(e.getPointerCount()>=2){float d=distance(e);if(e.getActionMasked()==MotionEvent.ACTION_POINTER_DOWN)previousDistance=d;else if(e.getActionMasked()==MotionEvent.ACTION_MOVE&&previousDistance>0&&d>0){float factor=previousDistance/d;queueEvent(()->renderer.zoomBy(factor));previousDistance=d;}return true;}
+            float x=e.getX(),y=e.getY();if(e.getActionMasked()==MotionEvent.ACTION_DOWN){previousX=x;previousY=y;previousDistance=0;return true;}
+            if(e.getActionMasked()==MotionEvent.ACTION_MOVE){final float dx=x-previousX,dy=y-previousY;queueEvent(()->renderer.orbit(dx,dy));previousX=x;previousY=y;return true;}
+            if(e.getActionMasked()==MotionEvent.ACTION_POINTER_UP)previousDistance=0;return true;
         }
     }
 }
