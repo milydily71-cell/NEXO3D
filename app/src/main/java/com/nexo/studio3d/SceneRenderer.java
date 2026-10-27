@@ -26,13 +26,13 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
         -1,-1,-1,.95f,.45f,.75f,1,-1,1,.95f,.45f,.75f,1,-1,-1,.95f,.45f,.75f,
         -1,-1,-1,.95f,.45f,.75f,-1,-1,1,.95f,.45f,.75f,1,-1,1,.95f,.45f,.75f
     };
-    private FloatBuffer cubeData,gridData;
-    private int gridVertices,program,posLoc,colorLoc,mvpLoc,width=1,height=1,count=1;
+    private FloatBuffer cubeData,gridData,importedData;
+    private int gridVertices,importedVertices,program,posLoc,colorLoc,mvpLoc,width=1,height=1,count=1;
     private boolean showGrid=true;
     private float yaw=35,pitch=22,zoom=8.5f;
     private final float[] projection=new float[16],view=new float[16],model=new float[16],vp=new float[16],mvp=new float[16];
 
-    void setObjectCount(int n){count=Math.max(0,Math.min(128,n));}
+    void setObjectCount(int n){count=Math.max(0,Math.min(128,n));}\n    void setImportedMesh(float[] packed){if(packed==null||packed.length<18||packed.length%6!=0){importedData=null;importedVertices=0;return;}importedData=buffer(packed);importedVertices=packed.length/6;}
     void setGridEnabled(boolean enabled){showGrid=enabled;}
     void orbit(float dx,float dy){yaw+=dx*.6f;pitch=Math.max(-80,Math.min(80,pitch+dy*.45f));}
     void zoomBy(float factor){if(factor>0&&Float.isFinite(factor))zoom=Math.max(2.5f,Math.min(30f,zoom*factor));}
