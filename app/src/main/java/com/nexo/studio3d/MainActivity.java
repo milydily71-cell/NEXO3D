@@ -36,19 +36,17 @@ public class MainActivity extends Activity {
                 .setPositiveButton("Close",null).show();
             return;
         }
-        LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(Color.rgb(16,19,28));
-        LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL); top.setPadding(12,6,12,6);
-        TextView title=new TextView(this); title.setText("NEXO  /  STUDIO 3D"); title.setTextColor(Color.WHITE); title.setTextSize(17); title.setTypeface(null,1);
-        top.addView(title,new LinearLayout.LayoutParams(0,-2,1));
-        Button importButton=button("Import GLB"); importButton.setOnClickListener(v->chooseModel()); top.addView(importButton); root.addView(top);
-        scene=new SceneView(); root.addView(scene,new LinearLayout.LayoutParams(-1,0,1));
-        HorizontalScrollView scroll=new HorizontalScrollView(this); scroll.setHorizontalScrollBarEnabled(false);
-        LinearLayout tools=new LinearLayout(this); tools.setPadding(6,6,6,6); tools.setGravity(Gravity.CENTER_VERTICAL); tools.setBackgroundColor(Color.rgb(24,28,40));
+        setContentView(R.layout.activity_main);
+        Button importButton=findViewById(R.id.import_button);
+        importButton.setOnClickListener(v->chooseModel());
+        android.widget.FrameLayout viewport=findViewById(R.id.viewport_container);
+        scene=new SceneView();
+        viewport.addView(scene,new android.widget.FrameLayout.LayoutParams(-1,-1));
+        LinearLayout tools=findViewById(R.id.editor_tools);
         String[] names={"+ Cube","Remove","Undo","Redo","Grid","Move Gizmo","Front","Top","Side","Place Camera","Camera View","Dir Light","Light Probe","Save Scene"};
-        for(String name:names){Button b=button(name);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-2,46);lp.setMargins(3,0,3,0);tools.addView(b,lp);b.setOnClickListener(v->handleTool(name));}
-        scroll.addView(tools);root.addView(scroll);
-        status=new TextView(this);status.setTextColor(Color.rgb(190,199,220));status.setTextSize(12);status.setPadding(12,7,12,7);root.addView(status);
-        setContentView(root);refreshStatus("Native scene ready");
+        for(String name:names){Button b=button(name);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-2,44);lp.setMargins(3,0,3,0);tools.addView(b,lp);b.setOnClickListener(v->handleTool(name));}
+        status=findViewById(R.id.editor_status);
+        refreshStatus("Native scene ready");
     }
     private Button button(String label){Button b=new Button(this);b.setText(label);b.setTextSize(11);b.setAllCaps(false);b.setTextColor(Color.WHITE);b.setBackgroundResource(com.nexo.studio3d.R.drawable.editor_button);return b;}
     private void handleTool(String name){
