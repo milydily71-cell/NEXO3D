@@ -34,7 +34,7 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
     private float yaw=35,pitch=22,zoom=8.5f,cameraX=4.5f,cameraY=3.2f,cameraZ=6.5f;
     private final float[] projection=new float[16],view=new float[16],model=new float[16],vp=new float[16],mvp=new float[16];
 
-    void setObjectCount(int n){count=Math.max(0,Math.min(128,n));}
+    void setObjectCount(int n){int safe=Math.max(0,Math.min(128,n));if(safe!=count){importedData=null;importedVertices=0;selectedOffset[0]=selectedOffset[1]=selectedOffset[2]=0;}count=safe;}
     void setImportedMesh(float[] packed){if(packed==null||packed.length<18||packed.length%6!=0){importedData=null;importedVertices=0;return;}importedData=buffer(packed);importedVertices=packed.length/6;}
     void setGridEnabled(boolean enabled){showGrid=enabled;}
     void setMoveMode(boolean enabled){moveMode=enabled;}
