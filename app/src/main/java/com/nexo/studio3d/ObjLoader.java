@@ -14,7 +14,7 @@ final class ObjLoader {
         if(text.length()>32*1024*1024)throw new IllegalArgumentException("OBJ exceeds 32 MiB");
         List<float[]> vertices=new ArrayList<>();
         List<Integer> faces=new ArrayList<>();
-        for(String raw:text.split("\\R")){
+        for(String raw:text.split("\\r?\\n")){
             String line=raw.trim();if(line.isEmpty()||line.startsWith("#"))continue;
             String[] p=line.split("\\s+");
             if(p[0].equals("v")){
