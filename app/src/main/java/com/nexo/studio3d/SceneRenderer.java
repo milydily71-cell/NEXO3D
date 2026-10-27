@@ -61,9 +61,8 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
         float cx=(float)(zoom*Math.cos(pr)*Math.sin(yr)),cy=(float)(zoom*Math.sin(pr)),cz=(float)(zoom*Math.cos(pr)*Math.cos(yr));
         Matrix.setLookAtM(view,0,cx,cy,cz,0,0,0,0,1,0);Matrix.multiplyMM(vp,0,projection,0,view,0);GLES20.glUseProgram(program);
         if(showGrid){Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);bind(gridData);GLES20.glDrawArrays(GLES20.GL_LINES,0,gridVertices);unbind();}
-        bind(cubeData);
-        for(int i=0;i<count;i++){Matrix.setIdentityM(model,0);float x=(i%8-3.5f)*2.35f,z=(i/8)*2.35f;Matrix.translateM(model,0,x,0,z);Matrix.scaleM(model,0,.55f,.55f,.55f);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,36);}
-        unbind();
+        if(importedData!=null){Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);bind(importedData);GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,importedVertices);unbind();}
+        else {bind(cubeData);for(int i=0;i<count;i++){Matrix.setIdentityM(model,0);float x=(i%8-3.5f)*2.35f,z=(i/8)*2.35f;Matrix.translateM(model,0,x,0,z);Matrix.scaleM(model,0,.55f,.55f,.55f);Matrix.multiplyMM(mvp,0,vp,0,model,0);GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,36);}unbind();}
     }
     private void bind(FloatBuffer b){b.position(0);GLES20.glVertexAttribPointer(posLoc,3,GLES20.GL_FLOAT,false,24,b);GLES20.glEnableVertexAttribArray(posLoc);b.position(3);GLES20.glVertexAttribPointer(colorLoc,3,GLES20.GL_FLOAT,false,24,b);GLES20.glEnableVertexAttribArray(colorLoc);}
     private void unbind(){GLES20.glDisableVertexAttribArray(posLoc);GLES20.glDisableVertexAttribArray(colorLoc);}
