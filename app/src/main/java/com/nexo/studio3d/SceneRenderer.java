@@ -10,7 +10,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 final class SceneRenderer implements GLSurfaceView.Renderer {
-    private static final String VERT="attribute vec3 aPosition; attribute vec3 aColor; uniform mat4 uMvp; varying vec3 vColor; void main(){gl_Position=uMvp*vec4(aPosition,1.0);vColor=aColor;}";
+    private static final String VERT="attribute vec3 aPosition; attribute vec3 aColor; uniform mat4 uMvp; uniform vec3 uLightDirection; uniform float uAmbient; varying vec3 vColor; void main(){gl_Position=uMvp*vec4(aPosition,1.0);float diffuse=max(0.0,dot(normalize(aPosition),normalize(-uLightDirection)));vColor=aColor*(uAmbient+(1.0-uAmbient)*diffuse);}";
     private static final String FRAG="precision mediump float; varying vec3 vColor; void main(){gl_FragColor=vec4(vColor,1.0);}";
     private final float[] cube={
         -1,-1,-1,.9f,.25f,.25f,1,-1,-1,.9f,.25f,.25f,1,1,-1,.9f,.25f,.25f,
@@ -27,14 +27,14 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
         -1,-1,-1,.95f,.45f,.75f,-1,-1,1,.95f,.45f,.75f,1,-1,1,.95f,.45f,.75f
     };
     private FloatBuffer cubeData,gridData,importedData;
-    private int gridVertices,importedVertices,program,posLoc,colorLoc,mvpLoc,width=1,height=1,count=1;
+    private int gridVertices,importedVertices,program,posLoc,colorLoc,mvpLoc,lightLoc,ambientLoc,width=1,height=1,count=1;
     private boolean showGrid=true;
     private float yaw=35,pitch=22,zoom=8.5f;
     private final float[] projection=new float[16],view=new float[16],model=new float[16],vp=new float[16],mvp=new float[16];
 
     void setObjectCount(int n){count=Math.max(0,Math.min(128,n));}
     void setImportedMesh(float[] packed){if(packed==null||packed.length<18||packed.length%6!=0){importedData=null;importedVertices=0;return;}importedData=buffer(packed);importedVertices=packed.length/6;}
-    void setGridEnabled(boolean enabled){showGrid=enabled;}
+    void setGridEnabled(boolean enabled){showGrid=enabled;}\n    void setCameraMode(int mode){cameraMode=Math.max(0,Math.min(4,mode));switch(cameraMode){case 1:yaw=0;pitch=0;zoom=8;break;case 2:yaw=0;pitch=88;zoom=8;break;case 3:yaw=90;pitch=0;zoom=8;break;case 4:yaw=35;pitch=22;zoom=8;break;default:break;}}\n    void setDirectionalLight(boolean enabled){directionalLight=enabled;}\n    void setLightProbe(boolean enabled){lightProbe=enabled;}
     void orbit(float dx,float dy){yaw+=dx*.6f;pitch=Math.max(-80,Math.min(80,pitch+dy*.45f));}
     void zoomBy(float factor){if(factor>0&&Float.isFinite(factor))zoom=Math.max(2.5f,Math.min(30f,zoom*factor));}
 
@@ -48,7 +48,7 @@ final class SceneRenderer implements GLSurfaceView.Renderer {
         program=GLES20.glCreateProgram();GLES20.glAttachShader(program,vs);GLES20.glAttachShader(program,fs);GLES20.glLinkProgram(program);
         int[] ok=new int[1];GLES20.glGetProgramiv(program,GLES20.GL_LINK_STATUS,ok,0);
         if(ok[0]==0){android.util.Log.e("NEXO3D","Shader link failed: "+GLES20.glGetProgramInfoLog(program));GLES20.glDeleteProgram(program);program=0;}
-        else{posLoc=GLES20.glGetAttribLocation(program,"aPosition");colorLoc=GLES20.glGetAttribLocation(program,"aColor");mvpLoc=GLES20.glGetUniformLocation(program,"uMvp");}
+        else{posLoc=GLES20.glGetAttribLocation(program,"aPosition");colorLoc=GLES20.glGetAttribLocation(program,"aColor");mvpLoc=GLES20.glGetUniformLocation(program,"uMvp");lightLoc=GLES20.glGetUniformLocation(program,"uLightDirection");ambientLoc=GLES20.glGetUniformLocation(program,"uAmbient");}
         GLES20.glDeleteShader(vs);GLES20.glDeleteShader(fs);
     }
     private int putLine(float[] a,int k,float x1,float y1,float z1,float x2,float y2,float z2,float r,float g,float b){float[] v={x1,y1,z1,r,g,b,x2,y2,z2,r,g,b};System.arraycopy(v,0,a,k,v.length);return k+v.length;}
