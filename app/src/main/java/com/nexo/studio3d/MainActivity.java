@@ -50,7 +50,7 @@ public class MainActivity extends Activity {
         status=new TextView(this);status.setTextColor(Color.rgb(190,199,220));status.setTextSize(12);status.setPadding(12,7,12,7);root.addView(status);
         setContentView(root);refreshStatus("Native scene ready");
     }
-    private Button button(String label){Button b=new Button(this);b.setText(label);b.setTextSize(11);b.setAllCaps(false);b.setTextColor(Color.WHITE);b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(55,66,96)));return b;}
+    private Button button(String label){Button b=new Button(this);b.setText(label);b.setTextSize(11);b.setAllCaps(false);b.setTextColor(Color.WHITE);b.setBackgroundResource(com.nexo.studio3d.R.drawable.editor_button);return b;}
     private void handleTool(String name){
         switch(name){
             case "+ Cube": NativeScene.nativeAddCube();syncRenderer();refreshStatus("Cube added");break;
